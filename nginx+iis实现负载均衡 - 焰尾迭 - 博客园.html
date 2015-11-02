@@ -1,0 +1,791 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0047)http://www.cnblogs.com/yanweidie/p/4658136.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-cn"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>nginx+iis实现负载均衡 - 焰尾迭 - 博客园</title>
+<link type="text/css" rel="stylesheet" href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/blog-common.css">
+<link id="MainCss" type="text/css" rel="stylesheet" href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/bundle-nature.css">
+<link title="RSS" type="application/rss+xml" rel="alternate" href="http://www.cnblogs.com/yanweidie/rss">
+<link title="RSD" type="application/rsd+xml" rel="EditURI" href="http://www.cnblogs.com/yanweidie/rsd.xml">
+<link type="application/wlwmanifest+xml" rel="wlwmanifest" href="http://www.cnblogs.com/yanweidie/wlwmanifest.xml">
+<script type="text/javascript" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/encoder.js"></script><script src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/jquery.js" type="text/javascript"></script>  
+<script type="text/javascript">var currentBlogApp = 'yanweidie', cb_enable_mathjax=false;</script>
+<script src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/blog-common.js" type="text/javascript"></script>
+</head>
+<body>
+<a name="top"></a>
+<!--PageBeginHtml Block Begin-->
+<link href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/main.css" rel="stylesheet" type="text/css">
+<!--PageBeginHtml Block End-->
+
+<!--done-->
+<div id="banner"><div id="bnr_pic">
+<!--done-->
+<div class="header">
+	<div class="headerText">
+		<a id="Header1_HeaderTitle" class="headermaintitle" href="http://www.cnblogs.com/yanweidie/">焰尾迭</a><br>
+	</div><br>
+	<div class="headerDis">吾生也有涯，而知也无涯。以有涯随无涯，殆已。</div>
+</div>
+</div></div>
+<div id="main">
+	<!-- left starts -->
+	<div id="left">
+		<div id="mystats">
+			<br>
+				
+<!--done-->
+<div class="blogStats">
+随笔 - 29&nbsp;
+文章 - 0&nbsp;
+评论 - 491&nbsp;
+
+</div>
+			
+		</div>
+		<div id="mylinks">
+<!--done-->
+<a id="MyLinks1_HomeLink" class="menu" href="http://www.cnblogs.com/">博客园</a>&nbsp;&nbsp;<a id="MyLinks1_MyHomeLink" class="menu" href="http://www.cnblogs.com/yanweidie/">首页</a>&nbsp;&nbsp;<a id="MyLinks1_NewPostLink" class="menu" rel="nofollow" href="http://i.cnblogs.com/EditPosts.aspx?opt=1">新随笔</a>&nbsp;&nbsp;<a id="MyLinks1_ContactLink" accesskey="9" class="menu" rel="nofollow" href="http://msg.cnblogs.com/send/%E7%84%B0%E5%B0%BE%E8%BF%AD">联系</a>&nbsp;&nbsp;<a id="MyLinks1_Admin" class="menu" rel="nofollow" href="http://i.cnblogs.com/">管理</a>&nbsp;&nbsp;<a id="MyLinks1_Syndication" class="menu" href="http://www.cnblogs.com/yanweidie/rss">订阅</a>&nbsp;<a id="MyLinks1_XMLLink" href="http://www.cnblogs.com/yanweidie/rss"><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/xml.gif" alt="订阅"></a></div>
+		<div id="topics">
+			
+<div id="post_detail">
+<div class="post">
+	<div class="postTitle">
+		<h1><a id="cb_post_title_url" class="postTitle2" href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/nginx+iis实现负载均衡 - 焰尾迭 - 博客园.html">nginx+iis实现负载均衡</a></h1>
+	</div>
+	<div id="cnblogs_post_body"><p><a name="_labelTop"></a></p>
+<p>　　最近在研究分布式系统架构方面的知识，包括负载均衡，数据库读写分离，分布式缓存redis等。本篇先从负载均衡服务架构入手，关于负载均衡百度百科的定义如下：负载均衡，英文名称为Load Balance，其意思就是分摊到多个操作单元上进行执行，例如Web服务器、FTP服务器、企业关键应用服务器和其它关键任务服务器等，从而共同完成工作任务。</p>
+<p>　　我的解释：一项任务交由一个开发人员处理总会有上限处理能力，这时可以考虑增加开发人员来共同处理这项任务，多人处理同一项任务时就会涉及到调度问题，即任务分配，这和多线程理念是一致的。nginx在这里的角色相当于任务分配者。</p>
+<p><strong>阅读目录</strong></p>
+<ul>
+<li><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_label0">nginx安装</a></li>
+<li><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_label1">站点搭建及配置</a>&nbsp;</li>
+<li><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_label2">问题分析</a></li>
+<li><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_label3">总结</a></li>
+</ul>
+<div style="text-align: right;"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_labelTop">回到顶部</a><a name="_label0"></a></div>
+<h1 class="title">nginx安装</h1>
+<p><strong>&nbsp;&nbsp;&nbsp; Nginx</strong>是一款轻量级的Web 服务器/反向代理服务器及电子邮件（IMAP/POP3）代理服务器，并在一个BSD-like 协议下发行。由俄罗斯的程序设计师Igor Sysoev所开发，供俄国大型的入口网站及搜索引擎Rambler（俄文：Рамблер）使用。其特点是占有内存少，并发能力强，事实上nginx的并发能力确实在同类型的网页服务器中表现较好，中国大陆使用nginx网站用户有：百度、新浪、网易、腾讯等。</p>
+<p>　 最新版本的nginx版本为1.9.3，我这下载的是window版本的，一般实际场景都是安装在linux系统下的，由于linux系统目前正在摸索中这里就不介绍。官方下载地址：<a href="http://nginx.org/download/nginx-1.9.3.zip" target="_blank">nginx-1.9.3.zip</a>&nbsp;博客园下载地址：<a href="http://files.cnblogs.com/files/yanweidie/nginx-1.9.3.zip" target="_blank">nginx-1.9.3.zip</a>&nbsp;。下载完成之后解压运行nginx.exe就启动了nginx了，启动后会在进程里面看到nginx。</p>
+<p><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/190920309544181.jpg" alt=""><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/190923268601907.jpg" alt="" width="186" height="206"></p>
+<p>&nbsp;&nbsp; 要实现负载均衡需要修改conf/nginx.conf的配置信息，修改配置信息之后重新启动nginx服务，可以通过nginx -s reload指令实现。这里我们使用&nbsp;<a href="http://leleroyn.cnblogs.com/" target="_blank">Ants</a>&nbsp;提供的一个批处理来操作。</p>
+<p><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/190929078299439.jpg" alt=""></p>
+<p>将nginx.bat文件放到nginx.exe相同文件夹下，直接运行就行了。文章结尾会提供本文用到的所有文件。</p>
+<p>&nbsp;<img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/190931505167703.jpg" alt=""></p>
+<div style="text-align: right;"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_labelTop">回到顶部</a><a name="_label1"></a></div>
+<h1 class="title">站点搭建及配置</h1>
+<p><strong>1.搭建两个iis站点</strong></p>
+<p>&nbsp;站点下只有一个简单的index页面，用来输出当前服务器信息。由于我没有两台机器，所以将两个站点都部署到本机了，分别绑定了8082和9000两个端口。</p>
+<div class="cnblogs_code"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre> <span style="color: #0000ff;">protected</span> <span style="color: #0000ff;">void</span> Page_Load(<span style="color: #0000ff;">object</span><span style="color: #000000;"> sender, EventArgs e)
+        {
+            Label0.Text </span>= <span style="color: #800000;">"</span><span style="color: #800000;">请求开始时间：</span><span style="color: #800000;">"</span>+DateTime.Now.ToString(<span style="color: #800000;">"</span><span style="color: #800000;">yyyy-MM-dd HH:mm:ss</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+            Label1.Text </span>= <span style="color: #800000;">"</span><span style="color: #800000;">服务器名称：</span><span style="color: #800000;">"</span> + Server.MachineName;<span style="color: #008000;">//</span><span style="color: #008000;">服务器名称  </span>
+            Label2.Text = <span style="color: #800000;">"</span><span style="color: #800000;">服务器IP地址：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">LOCAL_ADDR</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">服务器IP地址  </span>
+            Label3.Text = <span style="color: #800000;">"</span><span style="color: #800000;">HTTP访问端口：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">SERVER_PORT</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">HTTP访问端口"</span>
+            Label4.Text = <span style="color: #800000;">"</span><span style="color: #800000;">.NET解释引擎版本：</span><span style="color: #800000;">"</span> + <span style="color: #800000;">"</span><span style="color: #800000;">.NET CLR</span><span style="color: #800000;">"</span> + Environment.Version.Major + <span style="color: #800000;">"</span><span style="color: #800000;">.</span><span style="color: #800000;">"</span> + Environment.Version.Minor + <span style="color: #800000;">"</span><span style="color: #800000;">.</span><span style="color: #800000;">"</span> + Environment.Version.Build + <span style="color: #800000;">"</span><span style="color: #800000;">.</span><span style="color: #800000;">"</span> + Environment.Version.Revision;<span style="color: #008000;">//</span><span style="color: #008000;">.NET解释引擎版本  </span>
+            Label5.Text = <span style="color: #800000;">"</span><span style="color: #800000;">服务器操作系统版本：</span><span style="color: #800000;">"</span> + Environment.OSVersion.ToString();<span style="color: #008000;">//</span><span style="color: #008000;">服务器操作系统版本  </span>
+            Label6.Text = <span style="color: #800000;">"</span><span style="color: #800000;">服务器IIS版本：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">SERVER_SOFTWARE</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">服务器IIS版本  </span>
+            Label7.Text = <span style="color: #800000;">"</span><span style="color: #800000;">服务器域名：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">SERVER_NAME</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">服务器域名  </span>
+            Label8.Text = <span style="color: #800000;">"</span><span style="color: #800000;">虚拟目录的绝对路径：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">APPL_RHYSICAL_PATH</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">虚拟目录的绝对路径  </span>
+            Label9.Text = <span style="color: #800000;">"</span><span style="color: #800000;">执行文件的绝对路径：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">PATH_TRANSLATED</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">执行文件的绝对路径  </span>
+            Label10.Text = <span style="color: #800000;">"</span><span style="color: #800000;">虚拟目录Session总数：</span><span style="color: #800000;">"</span> + Session.Contents.Count.ToString();<span style="color: #008000;">//</span><span style="color: #008000;">虚拟目录Session总数  </span>
+            Label11.Text = <span style="color: #800000;">"</span><span style="color: #800000;">虚拟目录Application总数：</span><span style="color: #800000;">"</span> + Application.Contents.Count.ToString();<span style="color: #008000;">//</span><span style="color: #008000;">虚拟目录Application总数  </span>
+            Label12.Text = <span style="color: #800000;">"</span><span style="color: #800000;">域名主机：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">HTTP_HOST</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">域名主机  </span>
+            Label13.Text = <span style="color: #800000;">"</span><span style="color: #800000;">服务器区域语言：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">HTTP_ACCEPT_LANGUAGE</span><span style="color: #800000;">"</span>];<span style="color: #008000;">//</span><span style="color: #008000;">服务器区域语言  </span>
+            Label14.Text = <span style="color: #800000;">"</span><span style="color: #800000;">用户信息：</span><span style="color: #800000;">"</span> + Request.ServerVariables[<span style="color: #800000;">"</span><span style="color: #800000;">HTTP_USER_AGENT</span><span style="color: #800000;">"</span><span style="color: #000000;">];
+            Label14.Text </span>= <span style="color: #800000;">"</span><span style="color: #800000;">CPU个数：</span><span style="color: #800000;">"</span> + Environment.GetEnvironmentVariable(<span style="color: #800000;">"</span><span style="color: #800000;">NUMBER_OF_PROCESSORS</span><span style="color: #800000;">"</span>);<span style="color: #008000;">//</span><span style="color: #008000;">CPU个数  </span>
+            Label15.Text = <span style="color: #800000;">"</span><span style="color: #800000;">CPU类型：</span><span style="color: #800000;">"</span> + Environment.GetEnvironmentVariable(<span style="color: #800000;">"</span><span style="color: #800000;">PROCESSOR_IDENTIFIER</span><span style="color: #800000;">"</span>);<span style="color: #008000;">//</span><span style="color: #008000;">CPU类型  </span>
+            Label16.Text = <span style="color: #800000;">"</span><span style="color: #800000;">请求来源地址：</span><span style="color: #800000;">"</span> + Request.Headers[<span style="color: #800000;">"</span><span style="color: #800000;">X-Real-IP</span><span style="color: #800000;">"</span><span style="color: #000000;">];
+        }</span></pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<p><strong>2.修改nginx配置信息</strong></p>
+<p><strong>&nbsp; </strong>修改nginx监听端口，修改http server下的listen节点值，由于本机80端口已经被占用，我改为监听8083端口。</p>
+<p>&nbsp;&nbsp; listen&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8083;</p>
+<p>&nbsp; 在http节点下添加upstream（服务器集群），server设置的是集群服务器的信息，我这里搭建了两个站点，配置了两条信息。</p>
+<p>&nbsp;&nbsp;&nbsp; #服务器集群名称为Jq_one<br>&nbsp;&nbsp;&nbsp; upstream Jq_one {<br>&nbsp;　　server&nbsp; 127.0.0.1:9000;&nbsp;<br>&nbsp;　　server&nbsp; 127.0.0.1:8082; <br>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;在http节点下找到location节点修改</p>
+<p>&nbsp; location / {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; root&nbsp;&nbsp; html;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; index&nbsp; index.aspx index.html index.htm; #修改主页为index.aspx<br>&nbsp;&nbsp;&nbsp;&nbsp; #其中jq_one&nbsp;对应着upstream设置的集群名称<br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_pass&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; http://Jq_one;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp; #设置主机头和客户端真实地址，以便服务器获取客户端真实IP<br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_set_header&nbsp;&nbsp; Host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $host; <br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_set_header&nbsp;&nbsp; X-Real-IP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $remote_addr; <br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_set_header&nbsp;&nbsp; X-Forwarded-For&nbsp; $proxy_add_x_forwarded_for;<br>&nbsp;}</p>
+<p>修改完成配置文件以后记得重启nginx服务，最终完整配置文件信息如下</p>
+<p><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/190958488294800.jpg" alt=""></p>
+<p><strong>3.运行结果</strong></p>
+<p><strong>&nbsp; </strong>访问http://127.0.0.1:8083/index.aspx ，多访问几次，着重关注标红部分。</p>
+<p><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/191013113605058.jpg" alt=""><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/191013542829912.jpg" alt=""></p>
+<p>可以看到，我们的请求被分发到了8082站点和9000站点，并且第一次是8082站点第二次9000。出现这样的结果证明我们负载均衡搭建成功了。&nbsp;尝试关闭其中的9000站点，然后刷新页面发现输出的http端口一直是8082，也就是说其中一个站点挂了，只要还有一个站点是好的，我们的还是可以服务。</p>
+<div style="text-align: right;"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_labelTop">回到顶部</a><a name="_label2"></a></div>
+<h1 class="title">问题分析</h1>
+<p>&nbsp; 虽然我们搭建好了负载均衡站点，但是还存在以下问题。</p>
+<p><strong>&nbsp; 1.如果站点使用了session，请求平均分配到两个站点，那么必然存在session共享问题，该如何解决？</strong></p>
+<ul>
+<li>使用数据库保存session信息</li>
+<li>使用nginx将同一ip的请求分配到固定服务器，修改如下。ip_hash会计算ip对应hash值，然后分配到固定服务器</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p>　　upstream Jq_one{<br>&nbsp; 　　server 127.0.0.1:8082 ;<br>&nbsp;　　 server 127.0.0.1:9000 ;<br>&nbsp;&nbsp; 　　ip_hash;<br>　　}</p>
+<ul>
+<li>搭建一台Redis服务器，对session的读取都从该Redis服务器上读取。后面的文章将介绍分布式缓存Redis的使用</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p>&nbsp;<strong> 2.管理员更新站点文件，该怎么操作，现在还只有两台服务器，可以手工将文件更新到两台服务器，如果是10台呢，那么手工操作必然是不可行的</strong></p>
+<ul>
+<li>多服务器站点更新可以使用GoodSync 文件同步程序，会自动检测文件的修改新增，然后同步到其它服务器上。在linux下可以使用rsync</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p>&nbsp;<strong> 3.站点中的文件上传功能会将文件分配到不同的服务器，文件共享问题如何解决。</strong></p>
+<ul>
+<li>使用文件服务器将所有文件存储到该服务器上，文件操作读取写入都在该服务器上。这里同样会存在一个问题，文件服务器存在读写上限。</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p><strong>&nbsp; 4.负载的服务器配置不一样，有的高有的低可不可以让配置高的服务器处理请求多一些</strong></p>
+<ul>
+<li>这里讲一下，负载均衡有好几种算法 &nbsp;轮转法，散列法，&nbsp;最少连接法，最低缺失法，最快响应法，加权法。我们这里可以使用加权法来分配请求。</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p>&nbsp;&nbsp;&nbsp;&nbsp; upstream Jq_one{<br>&nbsp; 　　server 127.0.0.1:8082 weight=4;<br>&nbsp;　　 server 127.0.0.1:9000 weight=1;<br>　　}</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;通过weight设置每台服务器分配请求站的权重，值越高分配的越多。</p>
+<p>&nbsp;<strong>5.由于请求是经过nginx转发过来的，可以在代码里面获取到用户请求的实际ip地址吗？</strong></p>
+<ul>
+<li>答案是肯定的，在localtion节点设置如下请求头信息</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p>&nbsp;&nbsp;&nbsp; #设置主机头和客户端真实地址，以便服务器获取客户端真实IP<br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_set_header&nbsp;&nbsp; Host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $host; <br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_set_header&nbsp;&nbsp; X-Real-IP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $remote_addr; <br>&nbsp;&nbsp;&nbsp;&nbsp; proxy_set_header&nbsp;&nbsp; X-Forwarded-For&nbsp; $proxy_add_x_forwarded_for;</p>
+<p>&nbsp;&nbsp;&nbsp; 代码里面通过Request.Headers[<span style="color: #800000;">"<span style="color: #800000;">X-Real-IP<span style="color: #800000;">"<span style="color: #000000;">]，就能获取到真实ip</span></span></span></span></p>
+<p><span style="color: #800000;"><span style="color: #800000;"><span style="color: #800000;"><span style="color: #000000;">&nbsp;<strong>6.nginx实现静态文件(image,js,css)缓存</strong></span></span></span></span></p>
+<ul>
+<li><span style="color: #800000;"><span style="color: #800000;"><span style="color: #800000;"><span style="color: #000000;">在server节点下添加新的localtion</span></span></span></span></li>
+<li><span style="color: #800000;"><span style="color: #800000;"><span style="color: #800000;"><span style="color: #000000;">&nbsp;#静态资源缓存设置<br>&nbsp;location ~ \.(jpg|png|jpeg|bmp|gif|swf|css)$<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; expires 30d;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; root /nginx-1.9.3/html;#root:&nbsp; #静态文件存在地址，这里设置在/nginx-1.9.3/html下<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; break;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span></span></span>&nbsp;</li>
+
+
+
+
+
+
+
+
+
+</ul>
+<p>&nbsp;&nbsp; &nbsp;这是index页面的代码 &lt;li&gt;&lt;img src="/images/1.jpg"/&gt;&lt;/li&gt;</p>
+<p><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/191053133135514.jpg" alt=""><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/191053214071109.jpg" alt="" width="223" height="240"></p>
+<div style="text-align: right;"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#_labelTop">回到顶部</a><a name="_label3"></a></div>
+<h1 class="title">总结</h1>
+<p>　　通过nginx我们实现了一个简单的负载均衡，实际情况比这复杂很多。比如nginx服务器挂了，那我们的站点就直接挂了，正确的通过keepalived组件来搭建多台nginx服务提供服务。本篇只做为分布式系统的开篇，后续会陆续推出Redis缓存，数据库实现分布式架构的文章，敬请期待！希望能够得到博客园分布式大牛的指导。</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 本篇文章用到的资源打包下载地址：<a href="http://files.cnblogs.com/files/yanweidie/nginx_iis.rar" target="_blank">nginx_iis</a>&nbsp; </p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<div class="articleFooter">
+<p> 如果，您认为阅读这篇博客让您有些收获，不妨点击一下右下角的<a id="btnRecommendMyBlog" href="javascript:void(0);">【<strong>推荐</strong>】</a>按钮。<br>
+如果，您希望更容易地发现我的新博客，不妨点击一下绿色通道的<a onclick="c_follow();" href="javascript:void(0);">【<strong>关注我</strong>】</a>。<br>
+因为，我的写作热情也离不开您的肯定支持。
+</p>
+<p>感谢您的阅读，如果您对我的博客所讲述的内容有兴趣，请继续关注我的后续博客，我是焰尾迭 。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div></div><div id="MySignature"></div>
+<div class="clear"></div>
+<div id="blog_post_info_block">
+<div id="BlogPostCategory">分类: <a href="http://www.cnblogs.com/yanweidie/category/713361.html">分布式系统架构</a></div>
+<div id="EntryTag">标签: <a href="http://www.cnblogs.com/yanweidie/tag/nginx/">nginx</a>, <a href="http://www.cnblogs.com/yanweidie/tag/iis/">iis</a>, <a href="http://www.cnblogs.com/yanweidie/tag/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/">负载均衡</a>, <a href="http://www.cnblogs.com/yanweidie/tag/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/">分布式系统架构</a></div>
+<div id="blog_post_info"><div id="green_channel">
+<a href="javascript:void(0);" id="green_channel_digg" onclick="DiggIt(4658136,cb_blogId,1);green_channel_success(this,&#39;谢谢推荐！&#39;);">好文要顶</a>
+<a id="green_channel_follow" onclick="c_follow();" href="javascript:void(0);">关注我</a>
+<a id="green_channel_favorite" onclick="AddToWz(cb_entryId);return false;" href="javascript:void(0);">收藏该文</a><a id="green_channel_contact" href="http://msg.cnblogs.com/send/%E7%84%B0%E5%B0%BE%E8%BF%AD" target="_blank">联系我</a>
+<a id="green_channel_weibo" href="javascript:void(0);" title="分享至新浪微博" onclick="ShareToTsina()"><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/icon_weibo_24.png" alt=""></a>
+<a id="green_channel_wechat" href="javascript:void(0);" title="分享至微信" onclick="shareOnWechat()"><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/wechat.png" alt=""></a>
+</div>
+<div id="author_profile">
+<div id="author_profile_info" class="author_profile_info">
+<a href="http://home.cnblogs.com/u/yanweidie/" target="_blank"><img src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/u336693.gif" class="author_avatar" alt=""></a>
+<div id="author_profile_detail" class="author_profile_info">
+<a href="http://home.cnblogs.com/u/yanweidie/">焰尾迭</a><br>
+<a href="http://home.cnblogs.com/u/yanweidie/followees">关注 - 16</a><br>
+<a href="http://home.cnblogs.com/u/yanweidie/followers">粉丝 - 368</a>
+</div>
+</div>
+<div class="clear"></div>
+<div id="author_profile_honor"></div>
+<div id="author_profile_follow">
+    <a href="javascript:void(0);" onclick="c_follow();return false;">+加关注</a>
+</div>
+</div>
+<div id="div_digg">										
+    <div class="diggit" onclick="votePost(4658136,&#39;Digg&#39;)">
+        <span class="diggnum" id="digg_count">125</span>
+    </div>
+	<div class="buryit" onclick="votePost(4658136,&#39;Bury&#39;)"> 
+		<span class="burynum" id="bury_count">0</span>
+	</div>
+	<div class="clear"></div>	
+	<div class="diggword" id="digg_tips">
+    (请您对文章做出评价)
+    </div>	
+</div>
+</div>
+<div class="clear"></div>
+<div id="post_next_prev"><a href="http://www.cnblogs.com/yanweidie/p/4605212.html" class="p_n_p_prefix">« </a> 上一篇：<a href="http://www.cnblogs.com/yanweidie/p/4605212.html" title="发布于2015-06-29 07:58">Newtonsoft.Json高级用法</a><br><a href="http://www.cnblogs.com/yanweidie/p/4719692.html" class="p_n_p_prefix">» </a> 下一篇：<a href="http://www.cnblogs.com/yanweidie/p/4719692.html" title="发布于2015-08-11 22:17">分布式中使用Redis实现Session共享(一)</a><br></div>
+</div>
+
+
+	<div class="postDesc">posted on <span id="post-date">2015-07-19 11:10</span> <a href="http://www.cnblogs.com/yanweidie/">焰尾迭</a> 阅读(<span id="post_view_count">8239</span>) 评论(<span id="post_comment_count">61</span>)  <a href="http://i.cnblogs.com/EditPosts.aspx?postid=4658136" rel="nofollow">编辑</a> <a href="http://www.cnblogs.com/yanweidie/p/4658136.html#" onclick="AddToWz(4658136);return false;">收藏</a></div>
+</div>
+<script type="text/javascript">var allowComments=true,isLogined=true,cb_blogId=114902,cb_entryId=4658136,cb_blogApp=currentBlogApp,cb_blogUserGuid='91ae0150-efe9-e011-8ee0-842b2b196315',cb_entryCreatedDate='2015/7/19 11:10:00';loadViewCount(cb_entryId);</script>
+
+</div><a name="!comments"></a><div id="blog-comments-placeholder"><div id="comments_pager_top"><div class="pager"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#!comments" onclick="commentManager.renderComments(1,50);return false;">&lt; Prev</a><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#!comments" onclick="commentManager.renderComments(1,50);return false;">1</a><span class="current">2</span></div></div>
+<!--done-->
+<br>
+<div class="feedback_area_title">发表评论</div>
+<div class="feedbackNoItems"></div>
+	
+
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233466,&#39;SNqoEG6+awls2UYsYZ8DWJz4SJDdbgpZed6Kw+FmD8Gv/mgV9/Y4mw==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233466,&#39;SNqoEG6+awls2UYsYZ8DWJz4SJDdbgpZed6Kw+FmD8Gv/mgV9/Y4mw==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233466" class="layer">#51楼</a><a name="3233466" id="comment_anchor_3233466"></a>  <span class="comment_date">2015-07-22 22:55</span> | <a id="a_comment_author_3233466" class="feedbackmanagelink" href="http://www.cnblogs.com/fuhui-jurassic/" target="_blank">一苇渡江</a> <a href="http://msg.cnblogs.com/send/%E4%B8%80%E8%8B%87%E6%B8%A1%E6%B1%9F" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233466" class="blog_comment_body">IIS 做负载均衡最好是用Windows Server 自带的组件NLB，效果也是非常好的，仅供参考。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233466,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233466,&#39;Bury&#39;,this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233480,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233480,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233480" class="layer">#52楼</a><a name="3233480" id="comment_anchor_3233480"></a>[<span class="louzhu">楼主</span>]  <span class="comment_date">2015-07-22 23:18</span> | <a id="a_comment_author_3233480" class="feedbackmanagelink" href="http://www.cnblogs.com/yanweidie/" target="_blank">焰尾迭</a> <a href="http://msg.cnblogs.com/send/%E7%84%B0%E5%B0%BE%E8%BF%AD" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233480" class="blog_comment_body"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233466" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3233466);">@</a>一苇渡江<br>回头研究一下</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233480,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233480,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3233480_avatar" style="display:none;">http://pic.cnblogs.com/face/u336693.gif?id=29100417</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233500,&#39;XuftClcrbgTqC0Mg1teEJAh50YePLRITMijmaOhh1ZsR1iff0FUy4w==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233500,&#39;XuftClcrbgTqC0Mg1teEJAh50YePLRITMijmaOhh1ZsR1iff0FUy4w==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233500" class="layer">#53楼</a><a name="3233500" id="comment_anchor_3233500"></a>  <span class="comment_date">2015-07-23 00:21</span> | <a id="a_comment_author_3233500" class="feedbackmanagelink" href="http://www.cnblogs.com/xiaodiejinghong/" target="_blank">小蝶惊鸿</a> <a href="http://msg.cnblogs.com/send/%E5%B0%8F%E8%9D%B6%E6%83%8A%E9%B8%BF" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233500" class="blog_comment_body">教坏人了。。。。<br>IIS是自带负载均衡的，根本不用Nginx<br>评论也有人提到NLB，会这个就更好，这个跟Nginx就是完全不是一个等级。。。。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233500,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233500,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3233500_avatar" style="display:none;">http://pic.cnblogs.com/face/499899/20130228214711.png</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233511,&#39;bR7IUvLLYESY40atYgSLsD9p66vf4oEGuYuNvGdX00mA0ap61yzNIQ==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233511,&#39;bR7IUvLLYESY40atYgSLsD9p66vf4oEGuYuNvGdX00mA0ap61yzNIQ==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233511" class="layer">#54楼</a><a name="3233511" id="comment_anchor_3233511"></a>  <span class="comment_date">2015-07-23 00:56</span> | <a id="a_comment_author_3233511" class="feedbackmanagelink" href="http://www.cnblogs.com/snowsky/" target="_blank">snowsky</a> <a href="http://msg.cnblogs.com/send/snowsky" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233511" class="blog_comment_body">既然都拿出nginx了，那还用什么iis和windows呢？<br><br>windows下当然是NLB</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233511,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233511,&#39;Bury&#39;,this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233533,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233533,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233533" class="layer">#55楼</a><a name="3233533" id="comment_anchor_3233533"></a>[<span class="louzhu">楼主</span>]  <span class="comment_date">2015-07-23 07:36</span> | <a id="a_comment_author_3233533" class="feedbackmanagelink" href="http://www.cnblogs.com/yanweidie/" target="_blank">焰尾迭</a> <a href="http://msg.cnblogs.com/send/%E7%84%B0%E5%B0%BE%E8%BF%AD" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233533" class="blog_comment_body"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233500" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3233500);">@</a>小蝶惊鸿<br>在Windows环境下用的都是微软的nlb吗</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233533,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233533,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3233533_avatar" style="display:none;">http://pic.cnblogs.com/face/u336693.gif?id=29100417</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233825,&#39;XuftClcrbgTqC0Mg1teEJAh50YePLRITMijmaOhh1ZsR1iff0FUy4w==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233825,&#39;XuftClcrbgTqC0Mg1teEJAh50YePLRITMijmaOhh1ZsR1iff0FUy4w==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233825" class="layer">#56楼</a><a name="3233825" id="comment_anchor_3233825"></a>  <span class="comment_date">2015-07-23 12:04</span> | <a id="a_comment_author_3233825" class="feedbackmanagelink" href="http://www.cnblogs.com/xiaodiejinghong/" target="_blank">小蝶惊鸿</a> <a href="http://msg.cnblogs.com/send/%E5%B0%8F%E8%9D%B6%E6%83%8A%E9%B8%BF" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233825" class="blog_comment_body"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233533" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3233533);">@</a>焰尾迭<br><fieldset class="comment_quote"><legend><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233533" title="查看引用原文">引用</a></legend>@小蝶惊鸿<br>在Windows环境下用的都是微软的nlb吗</fieldset><br>我就跟你稍微说说吧。<br><br>1、为什么Niginx在windows下性能不好<br>因为Nginx的高性能是依赖Linux的Epoll，而windows没有Epoll而是使用了其他，因此Nginx在windows下性能不太好。<br><br>2、NLB和Nginx的区别<br>NLB和LVS是同一种级别的，工作在低层协议；Nginx工作在高层协议；两者之间无论效率还是作用都不是同一种级别的。<br><br>3、NLB与IIS<br>NLB是工作在低层协议，因此跟IIS没有太大关联。正确的应该说，NLB可以给所有使用上层协议的软件负载均衡功能。而IIS本身自己页游负载均衡模块（自己百度查查）<br><br>推荐你看看这个系列（讲LVS的，跟NLB有异曲同工）：<br>http://jhonge.net/Home/Index/1/272</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233825,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233825,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3233825_avatar" style="display:none;">http://pic.cnblogs.com/face/499899/20130228214711.png</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233827,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233827,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233827" class="layer">#57楼</a><a name="3233827" id="comment_anchor_3233827"></a>[<span class="louzhu">楼主</span>]  <span class="comment_date">2015-07-23 12:05</span> | <a id="a_comment_author_3233827" class="feedbackmanagelink" href="http://www.cnblogs.com/yanweidie/" target="_blank">焰尾迭</a> <a href="http://msg.cnblogs.com/send/%E7%84%B0%E5%B0%BE%E8%BF%AD" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233827" class="blog_comment_body"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233825" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3233825);">@</a>小蝶惊鸿<br>谢谢指导</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233827,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233827,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3233827_avatar" style="display:none;">http://pic.cnblogs.com/face/u336693.gif?id=29100417</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3233835,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3233835,&#39;RWpg3mVfrC5b9JjSyx5qL8r/au1k9SRfO/oPZP0eE2wsG/6jUzYx8g==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233835" class="layer">#58楼</a><a name="3233835" id="comment_anchor_3233835"></a>[<span class="louzhu">楼主</span>]  <span class="comment_date">2015-07-23 12:33</span> | <a id="a_comment_author_3233835" class="feedbackmanagelink" href="http://www.cnblogs.com/yanweidie/" target="_blank">焰尾迭</a> <a href="http://msg.cnblogs.com/send/%E7%84%B0%E5%B0%BE%E8%BF%AD" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3233835" class="blog_comment_body"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3233825" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3233825);">@</a>小蝶惊鸿<br>另外我在文章里面有说，nginx不适合在windows下运行，实际都是运行在linux下的，这里是做演示。我记得iis带的是server frame吧</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3233835,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3233835,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3233835_avatar" style="display:none;">http://pic.cnblogs.com/face/u336693.gif?id=29100417</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3236077,&#39;XOL2UOTM7Dxe4T93P2GH1I1rlkg2wf6d/F9Zgo9Juy/buo2h23LerQ==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3236077,&#39;XOL2UOTM7Dxe4T93P2GH1I1rlkg2wf6d/F9Zgo9Juy/buo2h23LerQ==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3236077" class="layer">#59楼</a><a name="3236077" id="comment_anchor_3236077"></a>  <span class="comment_date">2015-07-27 13:40</span> | <a id="a_comment_author_3236077" class="feedbackmanagelink" href="http://www.cnblogs.com/liuyuqing/" target="_blank">EcitGis</a> <a href="http://msg.cnblogs.com/send/EcitGis" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3236077" class="blog_comment_body">mark</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3236077,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3236077,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3236077_avatar" style="display:none;">http://pic.cnblogs.com/face/614021/20140521113709.png</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3237883,&#39;+6/ENHcujQW/hRTquq7yCmkRybwPgr6P/ODE4T9v7GIZTLEz5P2eUQ==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3237883,&#39;+6/ENHcujQW/hRTquq7yCmkRybwPgr6P/ODE4T9v7GIZTLEz5P2eUQ==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3237883" class="layer">#60楼</a><a name="3237883" id="comment_anchor_3237883"></a>  <span class="comment_date">2015-07-30 08:40</span> | <a id="a_comment_author_3237883" class="feedbackmanagelink" href="http://www.cnblogs.com/yzenet/" target="_blank">KyrieYang</a> <a href="http://msg.cnblogs.com/send/KyrieYang" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3237883" class="blog_comment_body">通俗易懂,写得好</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3237883,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3237883,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3237883_avatar" style="display:none;">http://pic.cnblogs.com/face/311919/20150911164327.png</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"><a href="javascript:void(0);" onclick="return ReplyComment(3246559,&#39;o+VqtPPHFST4X47mb2d4je5vlrPxS8z3TItYCOjgC0JGV/UvmxfTlw==&#39;)">回复</a><a href="javascript:void(0);" onclick="return QuoteComment(3246559,&#39;o+VqtPPHFST4X47mb2d4je5vlrPxS8z3TItYCOjgC0JGV/UvmxfTlw==&#39;)">引用</a></span>
+				</div>
+				<a href="http://www.cnblogs.com/yanweidie/p/4658136.html#3246559" class="layer">#61楼</a><a name="3246559" id="comment_anchor_3246559"></a><span id="comment-maxId" style="display:none;">3246559</span><span id="comment-maxDate" style="display:none;">2015/8/12 17:34:16</span>  <span class="comment_date">2015-08-12 17:34</span> | <a id="a_comment_author_3246559" class="feedbackmanagelink" href="http://www.cnblogs.com/doujiang1222/" target="_blank">挨踢男.Orz</a> <a href="http://msg.cnblogs.com/send/%E6%8C%A8%E8%B8%A2%E7%94%B7.Orz" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3246559" class="blog_comment_body">mark 顶</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3246559,&#39;Digg&#39;,this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3246559,&#39;Bury&#39;,this)">反对(0)</a></div><span id="comment_3246559_avatar" style="display:none;">http://pic.cnblogs.com/face/520225/20131008114345.png</span>
+			</div>
+		</div>
+	<div id="comments_pager_bottom"><div class="pager"><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#!comments" onclick="commentManager.renderComments(1,50);return false;">&lt; Prev</a><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#!comments" onclick="commentManager.renderComments(1,50);return false;">1</a><span class="current">2</span></div></div></div><script type="text/javascript">var commentManager = new blogCommentManager();commentManager.renderComments(0);</script>
+<div id="comment_form" class="commentform">
+<a name="commentform"></a>
+<div id="divCommentShow"></div>
+<div id="comment_nav"><span id="span_refresh_tips"></span><a href="javascript:void(0);" id="lnk_RefreshComments" onclick="return RefreshCommentList();">刷新评论</a><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#" onclick="return RefreshPage();">刷新页面</a><a href="http://www.cnblogs.com/yanweidie/p/4658136.html#top">返回顶部</a></div>
+<div id="comment_form_container"><div id="commentform_title">发表评论</div>
+<span id="tip_comment" style="color:Red"></span>
+<p>
+昵称：<input type="text" id="tbCommentAuthor" class="author" disabled="disabled" size="50" value="thinklife">
+</p>
+<div class="commentbox_main">
+<div class="commentbox_title">
+<div class="commentbox_title_left">评论内容：</div>
+<div class="commentbox_title_right">
+<img id="ubb_quote" class="comment_icon" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/quote.gif" alt="引用" title="添加引用" onclick="insertUBB(&#39;tbCommentBody&#39;,&#39;quote&#39;)">
+<img id="ubb_bold" class="comment_icon" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/b.png" alt="粗体" title="添加粗体" onclick="insertUBB(&#39;tbCommentBody&#39;,&#39;b&#39;)">
+<img id="ubb_url" class="comment_icon" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/lk.png" alt="链接" title="添加链接" onclick="insertUbbUrl(&#39;tbCommentBody&#39;)">
+<img id="ubb_indent" class="comment_icon" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/indent.png" alt="缩进" title="添加首行缩进" onclick="insertIndent(&#39;tbCommentBody&#39;)">
+<img id="ubb_code" class="comment_icon" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/InsertCode.gif" alt="代码" title="添加代码" onclick="insertUbbCode()">
+<img id="ubb_img" class="comment_icon" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/img.gif" alt="图片" title="上传图片" onclick="OpenImageUploadWindow();">
+</div>
+</div>
+<div class="clear"></div>
+<textarea id="tbCommentBody" class="comment_textarea" rows="20" cols="50"></textarea>
+</div>
+<p id="commentbox_opt">
+<input id="btn_comment_submit" type="button" class="comment_btn" value="提交评论">
+<span id="span_comment_canceledit" style="display:none"><a href="javascript:void(0);" onclick="return CancelCommentEdit()">不改了</a></span>
+<a href="javascript:void(0);" onclick="return logout();">注销</a>
+        <a id="commentbox_opt_sub" href="javascript:void(0);" title="订阅后有新评论时会邮件通知您" onclick="commentManager.Subscribe()">订阅评论</a>
+</p>
+<div id="tip_comment2" style="color:Red"></div>
+<p>
+[Ctrl+Enter快捷键提交]
+</p>
+<div style="display:none">
+<span id="comment_edit_id"></span><span id="span_parentcomment_id"></span>
+<span id="span_parent_id"></span>
+<span id="span_comment_replyto"></span>
+<span id="span_comment_posted"></span>
+</div>
+</div>
+<div class="ad_text_commentbox" id="ad_text_under_commentbox"></div>
+<div id="site_nav_under"><a href="http://www.ucancode.com/index.htm" target="_blank">【推荐】50万行VC++源码: 大型组态工控、电力仿真CAD与GIS源码库</a><br><a href="http://www.rongcloud.cn/" target="_blank">【推荐】融云即时通讯云－专注为 App 开发者提供IM云服务</a><br><a href="http://click.aliyun.com/m/1328/" target="_blank">【专享】阿里云9折优惠码：bky758</a><br></div>
+<div id="opt_under_post"></div>
+<script type="text/javascript">
+    var enableGoogleAd = canShowAdsense(); 
+    fixPostBodyFormat();
+</script>
+<div id="google_ad_c1" class="c_ad_block"><a href="http://job.cnblogs.com/" target="_blank"><img width="300" height="250" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/job_300_250.jpg" alt=""></a></div>
+<div id="under_post_news"><div class="itnews c_ad_block"><b>最新IT新闻</b>:<br> ·  <a href="http://news.cnblogs.com/n/531022/" target="_blank">《三体》电影官方爆照：红岸基地场景公开</a><br> ·  <a href="http://news.cnblogs.com/n/531021/" target="_blank">Root应用开发商威胁所有Android用户</a><br> ·  <a href="http://news.cnblogs.com/n/531020/" target="_blank">硅谷“创业女神”走下神坛：近百亿美元初创公司遭质疑</a><br> ·  <a href="http://news.cnblogs.com/n/531019/" target="_blank">红杉合伙人：现在经济比1999年理性多了</a><br> ·  <a href="http://news.cnblogs.com/n/531018/" target="_blank">阿里百川布局创业孵化营</a><br>» <a href="http://news.cnblogs.com/" title="IT新闻" target="_blank">更多新闻...</a></div></div>
+<div id="google_ad_c2" class="c_ad_block"><a href="http://e.jikexueyuan.com/android.html?hmsr=cnb_banner_android_09.14" target="_blank"><img width="468" height="60" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/24442-20150914101320586-2077280663.jpg" alt=""></a></div>
+<div id="under_post_kb"><div class="itnews c_ad_block" id="kb_block"><b>最新知识库文章</b>:<br><div id="kb_recent"> ·  <a href="http://kb.cnblogs.com/page/529677/" target="_blank">持续集成是什么？</a><br> ·  <a href="http://kb.cnblogs.com/page/530389/" target="_blank">人，技术与流程</a><br> ·  <a href="http://kb.cnblogs.com/page/530044/" target="_blank">HTTPS背后的加密算法</a><br> ·  <a href="http://kb.cnblogs.com/page/529285/" target="_blank">下一代云计算模式：Docker正掀起个性化商业革命</a><br> ·  <a href="http://kb.cnblogs.com/page/528495/" target="_blank">野生程序员的故事</a><br></div>» <a href="http://kb.cnblogs.com/" target="_blank">更多知识库文章...</a></div></div>
+<div id="HistoryToday" class="c_ad_block"></div>
+<script type="text/javascript">
+$(function () {
+    loadNewsAndKb();
+    loadBlogSignature();
+    LoadPostInfoBlock(cb_blogId, cb_entryId, cb_blogApp, cb_blogUserGuid);
+    GetPrevNextPost(cb_entryId, cb_blogId, cb_entryCreatedDate);
+    loadOptUnderPost();
+    GetHistoryToday(cb_blogId, cb_blogApp, cb_entryCreatedDate);
+    setTimeout(function () { incrementViewCount(cb_entryId); }, 200);
+});
+</script>
+</div>
+
+		</div>
+	</div>
+	<!-- left ends -->
+	<!-- right starts -->
+	<div id="right">
+		<!-- 右侧工具部分 -->
+		<div id="right_content">
+	
+			
+<!--done-->
+<h2 class="listtitle">公告</h2>
+<div class="newsItem">
+	<div id="blog-news">
+<div id="blog-news"><hr>个人经典作品：<br>
+1：<a href="http://www.cnblogs.com/yanweidie/p/3838765.html" target="_blank"><font color="red">数据字典生成工具</font></a><br>
+2：<a href="http://www.cnblogs.com/yanweidie/p/3838765.html" target="_blank"><font color="red">数据字典文档生成工具</font></a><br>
+3：<a href="http://www.cnblogs.com/yanweidie/p/3542670.html" target="_blank"><font color="red">windows服务安装卸载工具</font></a><br>
+4：<a href="http://www.cnblogs.com/yanweidie/p/3564062.html" target="_blank"><font color="red">任务管理平台TaskManager</font></a><br>
+<br>
+QQ热线：<a href="tencent://message/?uin=353166224&Site=http://www.qq.com&Menu=yes" target="_blank"><img title="欢迎与我联系" align="absmiddle" alt="欢迎与我联系" src="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/pa" border="0"></a><br>
+Email：<a href="mailto:353166224@qq.com">353166224@qq.com</a>
+<hr>
+<p style="text-align: center;">引用本博客相关文章及资源</p>
+<p style="text-align: center;">请注明作者和来源地址! </p>
+<hr>
+<p>博客园交友 QQ群：<br>
+1：<font color="red"><strong><a href="http://jq.qq.com/?_wv=1027&k=OuxgRi" target="_blank">147425783 QQ群</a></strong></font>(进/500)<br>
+</p></div><div id="profile_block">昵称：<a href="http://home.cnblogs.com/u/yanweidie/">焰尾迭</a><br>园龄：<a href="http://home.cnblogs.com/u/yanweidie/" title="入园时间：2011-09-29">4年</a><br>粉丝：<a href="http://home.cnblogs.com/u/yanweidie/followers/">368</a><br>关注：<a href="http://home.cnblogs.com/u/yanweidie/followees/">16</a><div id="p_b_follow"><a href="javascript:void(0);" onclick="cnblogs.UserManager.FollowBlogger(&#39;91ae0150-efe9-e011-8ee0-842b2b196315&#39;)">+加关注</a></div></div></div><script type="text/javascript">loadBlogNews();</script>
+</div>
+
+	
+			<div id="calendar"><div id="blog-calendar" style=""><table id="blogCalendar" class="Cal" cellspacing="0" cellpadding="0" title="日历">
+	<tbody><tr><td colspan="7"><table class="CalTitle" cellspacing="0">
+		<tbody><tr><td class="CalNextPrev"><a href="javascript:void(0);" onclick="loadBlogCalendar(&#39;2015/09/01&#39;);return false;">&lt;</a></td><td align="center">2015年10月</td><td class="CalNextPrev" align="right"><a href="javascript:void(0);" onclick="loadBlogCalendar(&#39;2015/11/01&#39;);return false;">&gt;</a></td></tr>
+	</tbody></table></td></tr><tr><th class="CalDayHeader" align="center" abbr="日" scope="col">日</th><th class="CalDayHeader" align="center" abbr="一" scope="col">一</th><th class="CalDayHeader" align="center" abbr="二" scope="col">二</th><th class="CalDayHeader" align="center" abbr="三" scope="col">三</th><th class="CalDayHeader" align="center" abbr="四" scope="col">四</th><th class="CalDayHeader" align="center" abbr="五" scope="col">五</th><th class="CalDayHeader" align="center" abbr="六" scope="col">六</th></tr><tr><td class="CalOtherMonthDay" align="center">27</td><td class="CalOtherMonthDay" align="center">28</td><td class="CalOtherMonthDay" align="center">29</td><td class="CalOtherMonthDay" align="center">30</td><td align="center">1</td><td align="center">2</td><td class="CalWeekendDay" align="center">3</td></tr><tr><td class="CalWeekendDay" align="center">4</td><td align="center">5</td><td align="center">6</td><td align="center">7</td><td align="center">8</td><td align="center">9</td><td class="CalWeekendDay" align="center">10</td></tr><tr><td class="CalWeekendDay" align="center">11</td><td align="center">12</td><td align="center">13</td><td align="center">14</td><td align="center">15</td><td align="center">16</td><td class="CalWeekendDay" align="center">17</td></tr><tr><td class="CalWeekendDay" align="center">18</td><td class="CalTodayDay" align="center"><a href="http://www.cnblogs.com/yanweidie/archive/2015/10/19.html"><u>19</u></a></td><td align="center">20</td><td align="center">21</td><td align="center">22</td><td align="center">23</td><td class="CalWeekendDay" align="center">24</td></tr><tr><td class="CalWeekendDay" align="center">25</td><td align="center">26</td><td align="center">27</td><td align="center">28</td><td align="center">29</td><td align="center">30</td><td class="CalWeekendDay" align="center">31</td></tr><tr><td class="CalOtherMonthDay" align="center">1</td><td class="CalOtherMonthDay" align="center">2</td><td class="CalOtherMonthDay" align="center">3</td><td class="CalOtherMonthDay" align="center">4</td><td class="CalOtherMonthDay" align="center">5</td><td class="CalOtherMonthDay" align="center">6</td><td class="CalOtherMonthDay" align="center">7</td></tr>
+</tbody></table></div><script type="text/javascript">loadBlogDefaultCalendar();</script></div>
+			
+				<div id="leftcontentcontainer">
+					<div id="blog-sidecolumn"><div id="sidebar_search" class="sidebar-block">
+<div id="sidebar_search" class="mySearch">
+<h3 class="catListTitle">搜索</h3>
+<div id="sidebar_search_box">
+<div id="widget_my_zzk" class="div_my_zzk"><input type="text" id="q" onkeydown="return zzk_go_enter(event);" class="input_my_zzk">&nbsp;<input onclick="zzk_go()" type="button" value="找找看" id="btnZzk" class="btn_my_zzk"></div>
+<div id="widget_my_google" class="div_my_zzk"><input type="text" name="google_q" id="google_q" onkeydown="return google_go_enter(event)" class="input_my_zzk">&nbsp;<input onclick="google_go()" type="button" value="谷歌搜索" class="btn_my_zzk"></div>
+</div>
+</div>
+
+</div><div id="sidebar_shortcut" class="sidebar-block">
+<h3 class="catListTitle">常用链接</h3>
+<ul>
+<li><a href="http://www.cnblogs.com/yanweidie/p/" title="我的博客的随笔列表">我的随笔</a></li><li><a href="http://www.cnblogs.com/yanweidie/MyComments.html" title="我发表过的评论列表">我的评论</a></li><li><a href="http://www.cnblogs.com/yanweidie/OtherPosts.html" title="我评论过的随笔列表">我的参与</a></li><li><a href="http://www.cnblogs.com/yanweidie/RecentComments.html" title="我的博客的评论列表">最新评论</a></li><li><a href="http://www.cnblogs.com/yanweidie/tag/" title="我的博客的标签列表">我的标签</a></li>
+</ul>
+<div id="itemListLin_con" style="display:none;">
+
+</div></div><div id="sidebar_recentposts" class="sidebar-block">
+<h3 class="catListTitle">最新随笔</h3>
+<div class="RecentComment" id="RecentPosts">
+<ul style="word-break:break-all">
+<li><a href="http://www.cnblogs.com/yanweidie/p/4888199.html">1. Spire.Doc组件读取与写入Word</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4800948.html">2. 使用TaskManager爬取2万条代理IP实现自动投票功能</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/3564062.html">3. 开源任务管理平台TaskManager介绍</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4763556.html">4. 分布式中Redis实现Session终结篇</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4678095.html">5. 分布式中使用Redis实现Session共享(二)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4719692.html">6. 分布式中使用Redis实现Session共享(一)</a></li><li><a href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/nginx+iis实现负载均衡 - 焰尾迭 - 博客园.html">7. nginx+iis实现负载均衡</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4605212.html">8. Newtonsoft.Json高级用法</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4516164.html">9. 在线文档预览方案-office web apps</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4452526.html">10. 我的前端学习历程</a></li>
+</ul>
+</div>
+</div><div id="sidebar_toptags" class="sidebar-block">
+<h3 class="catListTitle">我的标签</h3>
+<div id="MyTag">
+<ul>
+<li><a href="http://www.cnblogs.com/yanweidie/tag/%E6%95%B0%E6%8D%AE%E5%AD%97%E5%85%B8%E7%94%9F%E6%88%90%E5%B7%A5%E5%85%B7/">数据字典生成工具</a>(9)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/%E6%95%B0%E6%8D%AE%E5%AD%97%E5%85%B8%E6%96%87%E6%A1%A3%E7%94%9F%E6%88%90%E5%B7%A5%E5%85%B7/">数据字典文档生成工具</a>(8)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/PowerDesign/">PowerDesign</a>(8)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/Execl/">Execl</a>(7)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/Word/">Word</a>(7)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/SQL/">SQL</a>(5)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/">分布式系统架构</a>(3)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/DocX/">DocX</a>(3)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/NVelocity/">NVelocity</a>(3)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90/">代码生成</a>(3)</li><li><a href="http://www.cnblogs.com/yanweidie/tag/">更多</a></li>
+</ul>
+</div></div><div id="sidebar_categories">
+<!--done-->
+
+		<h1 class="catListTitle">随笔分类<span style="font-size:11px;font-weight:normal">(37)</span></h1>
+		
+				<ul>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_0" class="listitem" href="http://www.cnblogs.com/yanweidie/category/554647.html">C#(10)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_1" class="listitem" href="http://www.cnblogs.com/yanweidie/category/551734.html">SQL(6)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_2" class="listitem" href="http://www.cnblogs.com/yanweidie/category/551733.html">Window服务(4)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_3" class="listitem" href="http://www.cnblogs.com/yanweidie/category/551746.html">XML</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_4" class="listitem" href="http://www.cnblogs.com/yanweidie/category/713361.html">分布式系统架构(4)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_5" class="listitem" href="http://www.cnblogs.com/yanweidie/category/691143.html">前端学习(1)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_6" class="listitem" href="http://www.cnblogs.com/yanweidie/category/594364.html">数据字典生成工具系列文章(10)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_0_Link_7" class="listitem" href="http://www.cnblogs.com/yanweidie/category/680499.html">算法系列(2)</a>
+				</li>
+			
+				</ul>
+			
+	
+		<h1 class="catListTitle">随笔档案<span style="font-size:11px;font-weight:normal">(30)</span></h1>
+		
+				<ul>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_0" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/10.html">2015年10月 (1)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_1" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/09.html">2015年9月 (2)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_2" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/08.html">2015年8月 (3)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_3" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/07.html">2015年7月 (1)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_4" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/06.html">2015年6月 (1)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_5" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/05.html">2015年5月 (2)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_6" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/04.html">2015年4月 (2)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_7" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2015/03.html">2015年3月 (3)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_8" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2014/08.html">2014年8月 (3)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_9" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2014/07.html">2014年7月 (5)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_10" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2014/06.html">2014年6月 (3)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_11" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2014/02.html">2014年2月 (3)</a>
+				</li>
+			
+				<li class="catList">
+				 <a id="CatList_LinkList_1_Link_12" class="listitem" href="http://www.cnblogs.com/yanweidie/archive/2013/07.html">2013年7月 (1)</a>
+				</li>
+			
+				</ul>
+			
+	
+		<h1 class="catListTitle">css</h1>
+		
+	
+</div><div id="sidebar_scorerank" class="sidebar-block">
+<h3>积分与排名</h3>
+<ul>
+	<li>
+		积分 -
+		57897
+	</li><li>
+		排名 -
+		3476
+	</li>
+</ul>
+</div><div id="sidebar_recentcomments" class="sidebar-block"><div id="recent_comments_wrap">
+<h3 class="catListTitle">最新评论</h3>
+<div class="RecentComment" id="RecentComments">
+	<div id="RecentCommentsBlock"><ul>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/yanweidie/p/4888199.html#3287250">1. Re:Spire.Doc组件读取与写入Word</a></li>
+    <li class="recent_comment_body">不错不错</li>
+    <li class="recent_comment_author">--Cyclone77</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/yanweidie/p/4888199.html#3287243">2. Re:Spire.Doc组件读取与写入Word</a></li>
+    <li class="recent_comment_body">棒！</li>
+    <li class="recent_comment_author">--天外归云</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/yanweidie/p/4888199.html#3287231">3. Re:Spire.Doc组件读取与写入Word</a></li>
+    <li class="recent_comment_body">@Eric.HTlinux下应该是不行的，依赖于.net frameword ,不依赖于office...</li>
+    <li class="recent_comment_author">--焰尾迭</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/yanweidie/p/4888199.html#3287230">4. Re:Spire.Doc组件读取与写入Word</a></li>
+    <li class="recent_comment_body">先mark,再阅读</li>
+    <li class="recent_comment_author">--如果FLY</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/yanweidie/p/4888199.html#3287226">5. Re:Spire.Doc组件读取与写入Word</a></li>
+    <li class="recent_comment_body">linux  下可用不？ 是否依赖为软件的work？</li>
+    <li class="recent_comment_author">--Eric.HT</li>
+</ul>
+</div>
+</div>
+</div></div><div id="sidebar_topviewedposts" class="sidebar-block"><div id="topview_posts_wrap">
+<h3 class="catListTitle">阅读排行榜</h3>
+<div class="RecentComment" id="TopViewPosts"> 
+	<div id="TopViewPostsBlock"><ul><li><a href="http://www.cnblogs.com/yanweidie/p/3537144.html">1. Quartz Cron表达式 在线生成器(13551)</a></li><li><a href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/nginx+iis实现负载均衡 - 焰尾迭 - 博客园.html">2. nginx+iis实现负载均衡(8239)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4605212.html">3. Newtonsoft.Json高级用法(8193)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4452526.html">4. 我的前端学习历程(5739)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4719692.html">5. 分布式中使用Redis实现Session共享(一)(5721)</a></li></ul></div>
+</div>
+</div></div><div id="sidebar_topcommentedposts" class="sidebar-block"><div id="topfeedback_posts_wrap">
+<h3 class="catListTitle">评论排行榜</h3>
+<div class="RecentComment" id="TopCommentsPosts">
+	<div id="TopFeedbackPostsBlock"><ul><li><a href="http://www.cnblogs.com/yanweidie/p/3564062.html">1. 开源任务管理平台TaskManager介绍(61)</a></li><li><a href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/nginx+iis实现负载均衡 - 焰尾迭 - 博客园.html">2. nginx+iis实现负载均衡(61)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4605212.html">3. Newtonsoft.Json高级用法(60)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4719692.html">4. 分布式中使用Redis实现Session共享(一)(48)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4516164.html">5. 在线文档预览方案-office web apps(39)</a></li></ul></div>
+</div></div></div><div id="sidebar_topdiggedposts" class="sidebar-block"><div id="topdigg_posts_wrap">
+<h3 class="catListTitle">推荐排行榜</h3>
+<div class="RecentComment">
+	<div id="TopDiggPostsBlock"><ul><li><a href="http://www.cnblogs.com/yanweidie/p/4605212.html">1. Newtonsoft.Json高级用法(132)</a></li><li><a href="./nginx+iis实现负载均衡 - 焰尾迭 - 博客园_files/nginx+iis实现负载均衡 - 焰尾迭 - 博客园.html">2. nginx+iis实现负载均衡(125)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4452526.html">3. 我的前端学习历程(80)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4719692.html">4. 分布式中使用Redis实现Session共享(一)(69)</a></li><li><a href="http://www.cnblogs.com/yanweidie/p/4354600.html">5. 数据字典生成工具之旅(8)：SQL查询表的约束默认值等信息(62)</a></li></ul></div>
+</div></div></div></div><script type="text/javascript">loadBlogSideColumn();</script>
+				</div>
+			
+		</div>
+		<!-- //右侧工具部分 -->
+		<div id="footer">
+			
+<!--done-->
+Copyright ©2015 焰尾迭
+		</div>
+	</div>
+	<!-- right ends -->
+	<div class="clear"></div>
+	
+</div>
+
+
+
+</body></html>
